@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
 # PalcoTV Regex de direct2watch
-# Version 0.1 (17.10.2014)
+# Version 0.1 (02.11.2014)
 #------------------------------------------------------------
 # License: GPL (http://www.gnu.org/licenses/gpl-3.0.html)
 # Gracias a la librería plugintools de Jesús (www.mimediacenter.info)
@@ -21,16 +21,15 @@ import xbmcgui
 import xbmcaddon
 import xbmcplugin
 
-import plugintools
-import json
+import re,urllib,urllib2,sys
+import plugintools,ioncube
 
-
-home = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.palcotv/', ''))
-tools = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.palcotv/resources/tools', ''))
+home = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.palcotv-wip/', ''))
+tools = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.palcotv-wip/resources/tools', ''))
 addons = xbmc.translatePath(os.path.join('special://home/addons/', ''))
-resources = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.palcotv/resources', ''))
-art = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.palcotv/art', ''))
-tmp = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.palcotv/tmp', ''))
+resources = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.palcotv-wip/resources', ''))
+art = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.palcotv-wip/art', ''))
+tmp = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.palcotv-wip/tmp', ''))
 playlists = xbmc.translatePath(os.path.join('special://home/addons/playlists', ''))
 
 icon = art + 'icon.png'
@@ -73,12 +72,49 @@ def directwatch(params):
         
     referer= url_user.get("referer")
     if referer is None:
-        referer = 'http://www.direct2watch.com'
+        referer = 'http://www.vipracing.org'
 
+    ref = referer
+    body = gethttp_headers(pageurl, ref)
+    
+    nstr(pageurl,ref,body)
+
+
+
+def nstr(pageurl,ref,body):
+    plugintools.log("[PalcoTV 0.3.0].nstr")
     print 'pageurl',pageurl
-    print 'referer',referer
-    body = gethttp_headers(pageurl, referer)
-    getparams_directwatch(url_user, body)
+    # http://www.direct2watch.com/embedplayer.php?width=653&height=410&channel=14&autoplay=true
+    p1 = re.compile(ur'channel=?\'?"?([^\'"\&,;]+)')
+    p2 = re.compile(ur'width=?\'?"?([^\'"\&,;]+)')
+    p3 = re.compile(ur'height=?\'?"?([^\'"\&,;]+)')
+    f1=re.findall(p1, pageurl);f2=re.findall(p2, pageurl);f3=re.findall(p3, pageurl);#res=list(set(f));
+    print 'f1',f1
+    print 'f2',f2
+    print 'f3',f3
+    c=f1[0];w=f2[0];h=f3[0]
+    url='http://www.direct2watch.com/embedplayer.php?width='+w+'&height='+h+'&channel='+c+'&autoplay=true';body=''
+    plugintools.log("url= "+url)
+    plugintools.log("referer= "+ref)
+    bodi=curl_frame(url,ref,body)
+    print "\nURLXXX = "+url+"\nREFXXX = "+ref#+"\n"+bodi
+    tkserv='';strmr='';plpath='';swf='';vala='';
+    vals=ioncube.ioncube1(bodi)
+    print "URL = "+url;print "REF = "+ref;
+    tkserv=vals[0][1];strmr=vals[1][1].replace("\/","/");plpath=vals[2][1].replace(".flv","");swf=vals[3][1];
+    ref=url;url=tkserv;bodi=curl_frame(url,ref,body);
+    p='token":"([^"]+)';token=plugintools.find_single_match(bodi,p);#print token
+    media_url = strmr+'/'+plpath+' swfUrl='+swf+' token='+token+' live=1 timeout=15 swfVfy=1 pageUrl='+ref
+    plugintools.play_resolved_url(media_url)
+    print media_url    
+
+		
+def curl_frame(url,ref,body):
+	request_headers=[];
+	request_headers.append(["User-Agent","Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_3) AppleWebKit/537.31 (KHTML, like Gecko) Chrome/26.0.1410.65 Safari/537.31"])
+	request_headers.append(["Referer",ref])
+	body,response_headers=plugintools.read_body_and_headers(url, headers=request_headers);
+	return body
 
 
 
@@ -92,102 +128,4 @@ def gethttp_headers(pageurl, referer):
     body,response_headers = plugintools.read_body_and_headers(pageurl, headers=request_headers)      
     plugintools.log("body= "+body)
     return body
-
-
-                
-# Iniciamos protocolo de elaboración de la URL original
-# Capturamos parámetros correctos
-def getparams_directwatch(url_user, body):
-    plugintools.log("[PalcoTV-0.3.0].getparams_direct2watch " + repr(url_user) )
-
-    # Construimos el diccionario de 9stream
-    entry = plugintools.find_single_match(body, 'setStream(token) {(.*?)}')
-    ip = re.compile('rtmp:....([^:]*)').findall(body)
-    url_user["ip"]=str(ip[0])
-    print 'ip',ip
-    # plugintools.log("IP= "+str(ip[0]))
-    xs = re.compile('xs=(.*?)"').findall(body)
-    directwatchtok = xs[0]
-    streamer = re.compile('streamer\': \"(.*?)\"').findall(body)
-    print 'streamer',streamer
-    streamer = streamer[0]
-    streamer = streamer.split("xs=")
-    url_user["rtmp"]=streamer[1]
-    directwatchtok = xs[0]    
-    url_user["xs"] = directwatchtok
-    plugintools.log("xs= "+directwatchtok)
-    decoded = url_user.get("pageurl")
-    playpath = getfile_directwatch(url_user, decoded, body)   
-    print 'playpath',playpath
-    
-    decoded=re.compile('getJSON\("(.*?)"').findall(body)
-    decoded=decoded[0]
-    token = get_fileserver(decoded, url_user)
-    url_user["token"]=token[0]
-    
-    print url_user.get("playpath")
-    print url_user.get("pageurl")
-    print url_user.get("swfurl")
-    print url_user.get("token")
-    print url_user.get("rtmp")
-
-    # rtmp://watch1.direct2watch.com:1935/direct2watch/_definst_/ app=direct2watch/_definst_/?xs=_we_dmh4OTZ5Y2ttcGF4cHE1fDE0MTI5ODUyMDR8ODMuNTcuMTcuNTd8NTQzODYzNjQ0OGE5MXw0M2U1MTMxYWMxZTQ4ZGNkZjU5ZDI4Yzg5NTUyZDhjZjAwMDYwN2Y4 playpath=vhx96yckmpaxpq5 token=h3736e224cac18ec4c393c393029e0c1 swfUrl=http://www.direct2watch.com/player/player_embed_iguide.swf pageUrl=http://www.direct2watch.com/embedplayer.php?width=653&height=400&channel=10&autoplay=true live=1 swfVfy=true timeout=10
-    # rtmp://watch1.direct2watch.com:1935/direct2watch/_definst_/ app=directwatch/_definst_/?xs=_we_fDE0MTI5ODY5NDB8ODMuNTcuMTcuNTd8NTQzODZhMmM2YjBlMHxjNTA0ZjVhMDE4ZGY5ZWY4M2RhZWEwNDY5YzAzNDE5Y2ZmNTU2NzA0 playpath=vhx96yckmpaxpq5 token=se069e8f077eca5372c878eff5bd273c swfUrl=http://www.direct2watch.com/player/player2.swf pageUrl=http://www.direct2watch.com/embedplayer.php?width=653&amp;height=400&amp;channel=10&amp;autoplay=true live=1 swfVfy=truetimeout=10
-    # rtmp://watch1.direct2watch.com:1935/direct2watch/_definst_/ app=direct2watch/_definst_/?xs=_we_dmh4OTZ5Y2ttcGF4cHE1fDE0MTI5ODcyMjl8ODMuNTcuMTcuNTd8NTQzODZiNGQ0YWI0NnxjYmVkODk3MzQzY2MyNWJiOWZiODgzNGI5MjhlYTJmNDY1MmZhNDA3 playpath=vhx96yckmpaxpq5 token=se069e8f077eca5372c878eff5bd273c swfUrl=http://www.direct2watch.com/player/player_embed_iguide.swf pageUrl=http://www.direct2watch.com/embedplayer.php?width=653&height=400&channel=10&autoplay=true live=1 swfVfy=true timeout=10
-    # rtmp://watch1.direct2watch.com:1935/direct2watch/_definst_/ app=directwatch/_definst_/?xs=_we_fDE0MTI5ODczNDJ8ODMuNTcuMTcuNTd8NTQzODZiYmVlN2QxMHwzZmU0Mjc0NzkyMGI3MDg3YjI1Y2NiMGUxMjdhY2U3ZjM2ZGZmNWYz playpath=vhx96yckmpaxpq5 token=se069e8f077eca5372c878eff5bd273c swfUrl=http://www.direct2watch.com/player/player_embed_iguide.swf                      pageUrl=http://www.direct2watch.com/embedplayer.php?width=653&amp;height=400&amp;channel=10&amp;autoplay=true live=1 swfVfy=true timeout=10
-
-
-
-
-    url = 'rtmp://watch1.direct2watch.com:1935/direct2watch/_definst_/ app=direct2watch/_definst_/?xs=' + url_user.get("rtmp") + ' playpath=' + url_user.get("playpath") + ' token=' + url_user.get("token") + ' swfUrl=http://www.direct2watch.com/player/player_embed_iguide.swf pageUrl=' + url_user.get("pageurl") + ' live=1 swfVfy=true timeout=10'
-    plugintools.play_resolved_url(url)
- 
-
-# Vamos a capturar el playpath
-def getfile_directwatch(url_user, decoded, body):
-    plugintools.log("[PalcoTV-0.3.0].getfile_directwatch( "+repr(url_user))
-    referer = url_user.get("referer")
-    req = urllib2.Request(decoded)
-    req.add_header('User-Agent','Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.154 Safari/537.36')
-    req.add_header('Referer', referer)
-    response = urllib2.urlopen(req)
-    print response
-    data = response.read()
-    print data
-    file = re.compile('file(.*?)').findall(data)
-    print 'file1',file
-    return file
-
-
-# Vamos a capturar el fileserver.php (token del server)
-def get_fileserver(decoded, url_user):
-    plugintools.log("PalcoTV get_fileserver "+repr(url_user))
-    referer=url_user.get("pageurl")
-    req = urllib2.Request(decoded)
-    req.add_header('User-Agent','Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.154 Safari/537.36')
-    req.add_header('Referer',referer)
-    response = urllib2.urlopen(req)
-    print response
-    data = response.read()
-    print data
-    token = re.compile('token":"(.*)"').findall(data)
-    print 'token',token
-    return token
-
-def getfile_directwatch(url_user, decoded, body):
-    plugintools.log("PalcoTV getfile_directwatch( "+repr(url_user))
-    referer = url_user.get("referer")
-    req = urllib2.Request(decoded)
-    req.add_header('User-Agent','Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.154 Safari/537.36')
-    req.add_header('Referer', referer)
-    response = urllib2.urlopen(req)
-    print response
-    data = response.read()
-    print data
-    file = re.compile("file': '([^.]*)").findall(data)
-    print 'file2',file
-    return file
-
-    
-
 

@@ -4465,7 +4465,7 @@ def xml_skin():
     xmlmaster = plugintools.get_setting("xmlmaster")
     SelectXMLmenu = plugintools.get_setting("SelectXMLmenu")
 
-    # values="Juarrox|Reig|Simple|Sebas|Pastebin|Personalizado"
+    # values="Juarrox|Reig|Simple|Sebas|Pastebin|Personalizado|WIP|Halloween"
     if xmlmaster == 'true':
         if SelectXMLmenu == '0':
             mastermenu = 'http://pastebin.com/raw.php?i=bjCUnJjG'
@@ -4493,10 +4493,8 @@ def xml_skin():
             # Control para ver la intro de Sebas
             ver_intro = plugintools.get_setting("ver_intro")
             if ver_intro == "true":
-                xbmc.Player(xbmc.PLAYER_CORE_AUTO).play(art + 'Sebas.mp4')
-                
-        elif SelectXMLmenu == '4': 
-            # Pastebin
+                xbmc.Player(xbmc.PLAYER_CORE_AUTO).play(art + 'Sebas.mp4')                
+        elif SelectXMLmenu == '4':  # Pastebin
             id_pastebin = plugintools.get_setting("id_pastebin")
             if id_pastebin == "":
                 plugintools.log("[PalcoTV.xml_skin: No definido")                
@@ -4504,17 +4502,25 @@ def xml_skin():
             else:                
                 mastermenu = 'http://pastebin.com/raw.php?i=' +id_pastebin
                 plugintools.log("[PalcoTV.xml_skin: "+mastermenu)
-        elif SelectXMLmenu == '5':   # Skin personalizado
+        elif SelectXMLmenu == '5':   # Personalizado
+            mastermenu = 'http://pastebin.com/raw.php?i=jBvvJk4X'
             if mastermenu == "":
                 plugintools.log("[PalcoTV.xml_skin: No definido")
-                mastermenu = 'http://pastebin.com/raw.php?i=bjCUnJjG'                
+                mastermenu = 'http://pastebin.com/raw.php?i=U8eyV9Qg'                
                 # Control para ver la intro de PalcoTV
                 ver_intro = plugintools.get_setting("ver_intro")
                 if ver_intro == "true":
                     xbmc.Player(xbmc.PLAYER_CORE_AUTO).play(art + 'intro.mp4')                
-            else:
-                mastermenu = SelectXMLmenu
-                
+        elif SelectXMLmenu == '6':   # Halloween
+            mastermenu = 'http://pastebin.com/raw.php?i=jBvvJk4X'
+            if mastermenu == "":
+                plugintools.log("[PalcoTV.xml_skin: No definido")
+                mastermenu = 'http://pastebin.com/raw.php?i=U8eyV9Qg'  # Cargamos WIP                  
+                # Control para ver la intro de PalcoTV
+                ver_intro = plugintools.get_setting("ver_intro")
+                if ver_intro == "true":
+                    xbmc.Player(xbmc.PLAYER_CORE_AUTO).play(art + 'intro.mp4')              
+             
         
     else:
         # xmlmaster = False (no activado), menú por defecto     
@@ -4527,7 +4533,6 @@ def xml_skin():
         
 
     return mastermenu
-
 
 
 

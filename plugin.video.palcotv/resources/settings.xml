@@ -6,7 +6,7 @@
    		<setting id="pekes_no" type="bool" label="Control paternal" default="true"/>
 		<setting label="Menú XML personalizado" type="lsep" />
 		<setting id="xmlmaster" type="bool" label="Activar menú XML" default="false"/>
-		<setting id="SelectXMLmenu" type="enum" label="Seleccione menú XML:" values="Juarrox|Reig|Simple|Sebas|Pastebin|Personalizado" default="Juarrox" enable="!eq(-1,false)"/>		
+		<setting id="SelectXMLmenu" type="enum" label="Seleccione menú XML:" values="Juarrox|Reig|Simple|Sebas|Pastebin|Personalizado|Halloween" default="Juarrox" enable="!eq(-1,false)"/>		
 		<setting id="mastermenu" type="text" label="XML Master Menu: " default="" enable="!eq(-2,false)"/>
 		<setting id="id_pastebin" type="text" label="ID Pastebin: " default="" enable="!eq(-3,false)"/>
 		<setting label="Vídeos intro 3D" type="lsep" />

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #------------------------------------------------------------
 # PalcoTV Regex de 9straem
-# Version 0.1 (17.10.2014)
+# Version 0.2 (02.11.2014)
 #------------------------------------------------------------
 # License: GPL (http://www.gnu.org/licenses/gpl-3.0.html)
 # Gracias a la librería plugintools de Jesús (www.mimediacenter.info)
@@ -21,16 +21,15 @@ import xbmcgui
 import xbmcaddon
 import xbmcplugin
 
-import plugintools
-import json
+import re,urllib,urllib2,sys
+import plugintools,ioncube
 
-
-home = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.palcotv/', ''))
-tools = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.palcotv/resources/tools', ''))
+home = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.palcotv-wip/', ''))
+tools = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.palcotv-wip/resources/tools', ''))
 addons = xbmc.translatePath(os.path.join('special://home/addons/', ''))
-resources = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.palcotv/resources', ''))
-art = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.palcotv/art', ''))
-tmp = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.palcotv/tmp', ''))
+resources = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.palcotv-wip/resources', ''))
+art = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.palcotv-wip/art', ''))
+tmp = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.palcotv-wip/tmp', ''))
 playlists = xbmc.translatePath(os.path.join('special://home/addons/playlists', ''))
 
 icon = art + 'icon.png'
@@ -66,118 +65,40 @@ def ninestreams(params):
             entry = entry.replace("referer=", "")
             url_user["referer"]=entry
 
-    plugintools.log("URL_user dict= "+repr(url_user)) 
+    plugintools.log("URL_user dict= "+repr(url_user))
+
+    # Ejecutamos nuevo regex de Quequino...
     pageurl = url_user.get("pageurl")
-    
-    # Controlamos ambos casos de URL: Único link (pageUrl) o link completo rtmp://...
-    if pageurl is None:
-        pageurl = url_user.get("url")
-        
-    referer= url_user.get("referer")
-    if referer is None:
-        referer = 'http://verdirectotv.com/tv/documentales/history.html'
-    channel_id = re.compile('channel=([^&]*)').findall(pageurl)
-    print channel_id
-    channel_id = channel_id[0]
-    # http://www.9stream.com/embedplayer.php?width=650&height=400&channel=143&autoplay=true
-
-    if pageurl.find("embedplayer.php") >= 0:
-        pageurl = 'http://www.9stream.com/embedplayer.php?width=650&height=400&channel=' + channel_id + '&autoplay=true'
-        url_user["pageurl"]=pageurl
-        print 'pageurl',pageurl
-        print 'referer',referer
-        body = gethttp_headers(pageurl, referer)
-        getparams_ninestream(url_user, body)
-        url = 'rtmp://' + url_user.get("ip") + ':1935/verdirectotvedge/_definst_/ app=verdirectotvedge/_definst_/?xs=' + url_user.get("ninetok") + ' playpath=' + url_user.get("playpath") + ' token=' + url_user.get("token") + ' flashver=WIN%2011,9,900,117 swfUrl=http://www.9stream.com/player/player_orig_XXXXX.swf pageUrl=' + url_user.get("pageurl") + ' live=1 swfVfy=1 timeout=10'
-        plugintools.play_resolved_url(url)        
-    else:
-        pageurl = 'http://www.9stream.com/embedplayer_2.php?width=650&height=400&channel=' + channel_id + '&autoplay=true'
-        url_user["pageurl"]=pageurl
-        print 'pageurl',pageurl
-        print 'referer',referer
-        body = gethttp_headers(pageurl, referer)
-        getparams_ninestream(url_user, body)
-        url = 'rtmp://' + url_user.get("ip") + ':1935/verdirectotvedge/_definst_/ app=verdirectotvedge/_definst_/?xs=' + url_user.get("ninetok") + ' playpath=' + url_user.get("playpath") + ' token=' + url_user.get("token") + ' flashver=WIN%2011,9,900,117 swfUrl=http://www.9stream.com/player/player_orig_XXXXX.swf pageUrl=' + url_user.get("pageurl") + ' live=1 swfVfy=1 timeout=10'
-        plugintools.play_resolved_url(url)        
-
-
-
-# Vamos a hacer una llamada al pageUrl
-def gethttp_headers(pageurl, referer):
-      
-    request_headers=[]
-    request_headers.append(["User-Agent","Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_3) AppleWebKit/537.31 (KHTML, like Gecko) Chrome/26.0.1410.65 Safari/537.31"])
-    request_headers.append(["Referer",referer])
-    body,response_headers = plugintools.read_body_and_headers(pageurl, headers=request_headers)      
-    plugintools.log("body= "+body)
-    return body
-
-
-                
-# Iniciamos protocolo de elaboración de la URL original
-# Capturamos parámetros correctos
-def getparams_ninestream(url_user, body):
-    plugintools.log("[PalcoTV-0.3.0].getparams_ninestream " + repr(url_user) )
-
-    # Construimos el diccionario de 9stream
-    entry = plugintools.find_single_match(body, 'setStream(token) {(.*?)}')
-    ip = re.compile('rtmp:....([^:]*)').findall(body)   
-    url_user["ip"]=str(ip[0])
-    plugintools.log("IP= "+str(ip[0]))
-    xs = re.compile('xs=(.*?)"').findall(body)
-    ninetok = xs[0]
-    url_user["xs"] = ninetok
-    decoded = url_user.get("pageurl")
-    playpath = getfile_ninestream(url_user, decoded, body)   
-    playpath = playpath[0]
-    # ninetok = xs[0] + './' + playpath
-    ninetok = xs[0]
-    url_user["ninetok"]=ninetok
-    plugintools.log("xs= "+ninetok)
-    url_user["xs"] = ninetok
-    url_user["playpath"]=playpath
-    decoded=re.compile('getJSON\("(.*?)"').findall(body)
-    decoded=decoded[0]
-    print url_user
-    token = get_fileserver(decoded, url_user)
-    token = token[0]
-    url_user["token"]=token
-
-
-
- 
-
-# Vamos a capturar el playpath
-def getfile_ninestream(url_user, decoded, body):
-    plugintools.log("PalcoTV getfile_ninestream( "+repr(url_user))
-    referer = url_user.get("referer")
-    req = urllib2.Request(decoded)
-    req.add_header('User-Agent','Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.154 Safari/537.36')
-    req.add_header('Referer', referer)
-    response = urllib2.urlopen(req)
-    print response
-    data = response.read()
-    print data
-    file = re.compile("file': '([^.]*)").findall(data)
-    print 'file',file
-    return file
-
-
-# Vamos a capturar el fileserver.php (token del server)
-def get_fileserver(decoded, url_user):
-    plugintools.log("PalcoTV fileserver "+repr(url_user))
-    referer=url_user.get("pageurl")
-    req = urllib2.Request(decoded)
-    req.add_header('User-Agent','Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.154 Safari/537.36')
-    req.add_header('Referer',referer)
-    response = urllib2.urlopen(req)
-    print response
-    data = response.read()
-    print data
-    token = re.compile('token":"(.*)"').findall(data)
-    print 'token',token
-    return token
-
+    ref = url_user.get("referer")    
+    nstr(url,ref,pageurl)
     
 
+def nstr(url,ref,pageurl):
+    p1 = re.compile(ur'channel=?\'?"?([^\'"\&,;]+)')
+    p2 = re.compile(ur'width=?\'?"?([^\'"\&,;]+)')
+    p3 = re.compile(ur'height=?\'?"?([^\'"\&,;]+)')
+    f1=re.findall(p1, pageurl);f2=re.findall(p2, pageurl);f3=re.findall(p3, pageurl);#res=list(set(f));
+    c=f1[0];w=f2[0];h=f3[0]
+    url='http://www.9stream.com/embedplayer.php?width='+w+'&height='+h+'&channel='+c+'&autoplay=true';body='';#
+    plugintools.log("url= "+url)
+    plugintools.log("referer= "+ref)
+    bodi=curl_frame(url,ref,body)
+    print "\nURLXXX = "+url+"\nREFXXX = "+ref#+"\n"+bodi
+    tkserv='';strmr='';plpath='';swf='';vala='';
+    vals=ioncube.ioncube1(bodi)
+    print "URL = "+url;print "REF = "+ref;
+    tkserv=vals[0][1];strmr=vals[1][1].replace("\/","/");plpath=vals[2][1].replace(".flv","");swf=vals[3][1];
+    ref=url;url=tkserv;bodi=curl_frame(url,ref,body);
+    p='token":"([^"]+)';token=plugintools.find_single_match(bodi,p);#print token
+    media_url = strmr+'/'+plpath+' swfUrl='+swf+' token='+token+' live=1 timeout=15 swfVfy=1 pageUrl='+ref
+    plugintools.play_resolved_url(media_url)
+    print media_url    
 
+		
+def curl_frame(url,ref,body):
+	request_headers=[];
+	request_headers.append(["User-Agent","Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_3) AppleWebKit/537.31 (KHTML, like Gecko) Chrome/26.0.1410.65 Safari/537.31"])
+	request_headers.append(["Referer",ref])
+	body,response_headers=plugintools.read_body_and_headers(url, headers=request_headers);
+	return body
+    
