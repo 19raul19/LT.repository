@@ -98,11 +98,15 @@ def castdos(params):
         # http://www.cast247.tv/embed.php?channel=plusjdskaks?&amp;width=670&amp;height=400&amp;domain=streamingfreetv.net
         # http://www.cast247.tv/embed.php?channel=plusjdskaks&width=670&height=400&domain=streamingfreetv.net (url_user)
         pageurl = url_user.get("pageurl")
+        url_user["referer"]=pageurl
         width = plugintools.find_single_match(pageurl, 'width=(.*?)\&')
         height = plugintools.find_single_match(pageurl, 'height=(.*?)&')
+        playpath = plugintools.find_single_match(pageurl, 'channel=(.*?\&')
+        # playpath = url_user.get("playpath").split("?")
+        playpath = re.compile('channel=(.*?)&').findall(pageurl)
         print 'width',width
         print 'height',height
-        playpath = url_user.get("playpath").split("?")
+        print 'channel',playpath
         new_playpath = playpath[0]
         domain = pageurl.split("=")
         i = len(domain)

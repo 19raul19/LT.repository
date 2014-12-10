@@ -26,6 +26,7 @@ import plugintools
 home = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.palcotv/', ''))
 tools = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.palcotv/resources/tools', ''))
 addons = xbmc.translatePath(os.path.join('special://home/addons/', ''))
+resources = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.palcotv/resources', ''))
 art = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.palcotv/art', ''))
 tmp = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.palcotv/tmp', ''))
 playlists = xbmc.translatePath(os.path.join('special://home/addons/playlists', ''))

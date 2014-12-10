@@ -2,24 +2,7 @@
 #---------------------------------------------------------------------------
 # Plugin Tools v1.0.8
 #---------------------------------------------------------------------------
-# License: GPL (http://www.gnu.org/licenses/gpl-3.0.html)
-# Based on code from youtube, parsedom and pelisalacarta addons
-# Author: 
-# Jesús
-# tvalacarta@gmail.com
-# http://www.mimediacenter.info/plugintools
-#---------------------------------------------------------------------------
 # Changelog:
-# 1.0.0
-# - First release
-# 1.0.1
-# - If find_single_match can't find anything, it returns an empty string
-# - Remove addon id from this module, so it remains clean
-# 1.0.2
-# - Added parameter on "add_item" to say that item is playable
-# 1.0.3
-# - Added direct play
-# - Fixed bug when video isPlayable=True
 # 1.0.4
 # - Added get_temp_path, get_runtime_path, get_data_path
 # - Added get_setting, set_setting, open_settings_dialog and get_localized_string
@@ -279,6 +262,7 @@ def read_body_and_headers(url, post=None, headers=[], follow_redirects=False, ti
         except:
             import sys
             for line in sys.exc_info():
+                handle=urlopen(req)            
                 _log( "%s" % line )
     
     # Actualiza el almacén de cookies
@@ -322,7 +306,7 @@ def read_body_and_headers(url, post=None, headers=[], follow_redirects=False, ti
     fin = time.clock()
     _log("read_body_and_headers Downloaded in %d seconds " % (fin-inicio+1))
     _log("read_body_and_headers body="+data)
-
+	
     return data,returnheaders
 
 class NoRedirectHandler(urllib2.HTTPRedirectHandler):
@@ -343,7 +327,35 @@ def find_multiple_matches(text,pattern):
     matches = re.findall(pattern,text,re.DOTALL)
 
     return matches
+	
+def find_multiple_matches_multi(text,pattern):
+    _log("find_multiple_matches pattern="+pattern)
+    
+    matches = re.findall(pattern,text, re.MULTILINE)
 
+    return matches	
+	
+def find_multiple_matches_multi_multi(text,pattern):
+    _log("find_multiple_matches pattern="+pattern)
+    
+    matches = re.findall(pattern,text, re.MULTILINE|re.DOTALL)
+
+    return matches
+
+import htmlentitydefs
+import re
+
+pattern = re.compile("&(\w+?);")
+
+def html_entity_decode_char(m, defs=htmlentitydefs.entitydefs):
+    try:
+        return defs[m.group(1)]
+    except KeyError:
+        return m.group(0)
+
+def html_entity_decode(string):
+    return pattern.sub(html_entity_decode_char, string)
+	
 # Parse string and extracts first match as a string
 def find_single_match(text,pattern):
     _log("find_single_match pattern="+pattern)
@@ -393,7 +405,7 @@ def close_item_list():
     xbmcplugin.endOfDirectory(handle=int(sys.argv[1]), succeeded=True)
 
 def play_resolved_url(url):
-    _log("play_resolved_url ["+url+"]")
+    #_log("play_resolved_url ["+url+"]")
 
     listitem = xbmcgui.ListItem(path=url)
     listitem.setProperty('IsPlayable', 'true')
@@ -486,9 +498,14 @@ def get_localized_string(code):
     _log("get_localized_string code="+str(code))
 
     dev = __language__(code)
+    print dev
 
     try:
         dev = dev.encode("utf-8")
+	#data=body.encode("iso-8859-16")
+	#data=unicode(body.decode("utf-8"),"iso-8859-16")
+	#s = stripped.encode("iso 8859-16")
+	#s = unicode( s, "iso-8859-16" )
     except:
         pass
 
@@ -538,7 +555,6 @@ def selector(option_list,title="Select one"):
 
     dia = xbmcgui.Dialog()
     selection = dia.select(title,option_list)
-
     return selection
 
 def set_view(view_mode, view_code=0):

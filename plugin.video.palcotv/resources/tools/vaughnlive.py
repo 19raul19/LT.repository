@@ -22,7 +22,7 @@ import xbmcaddon
 import xbmcplugin
 
 import plugintools
-
+import time
 
 
 home = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.palcotv/', ''))
@@ -63,61 +63,33 @@ def resolve_vaughnlive(params):
             entry = entry.replace("token=", "")
             vaughnlive_user["token"]=entry           
             
-
-    # Obtenemos gettime y servidor paralelo (edge server)...
-    gettime = str(int(round(time.time() * 1000)))
-    server_edge = 'http://mvn.vaughnsoft.net/video/edge/live_alx_nxtv' + gettime + '.33434'
-    vaughnlive_user["rtmp"]=server_edge
-    plugintools.log("server_edge= "+server_edge)
+    # rtmp://50.7.78.138:443/live?kbjjHcUi6bZPicNvuKX5IxlcdGBj1HXm playpath=live_psntv_espnd11 live=1 timeout=20
+    # rtmp://192.240.105.42:443live?V79PxK0XPeKslBL1dsbHTI6LWwNTop36 playpath=live_psntv_espnd11 live=1 timeout=20
     
-    request_headers=[]
-    request_headers.append(["User-Agent","Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_3) AppleWebKit/537.31 (KHTML, like Gecko) Chrome/26.0.1410.65 Safari/537.31"])
-    request_headers.append(["Referer","http://www.vaughnlive.tv/"])
-    body,response_headers = plugintools.read_body_and_headers(server_edge, headers=request_headers)      
+    
+    pageurl = vaughnlive_user.get("pageurl")
+    body = gethttp_noref(pageurl)
+    #plugintools.log("body= "+body)
     body = body.strip()
     plugintools.log("body= "+body)
-    matches = re.compile('(.*?);').findall(body)
-    rtmp_server = matches[0]        
-    vaughnlive_user["rtmp"] = 'rtmp://' + rtmp_server + '/live?'
-    body = body.replace(rtmp_server, "")
-    body = body.replace("0m0", "")
-    body = body.replace(";", "")
+
+    # Obtenemos token
+    token = plugintools.find_single_match(body, 'vsVars.*= \"0m0(.*?)\"')
+    plugintools.log("token= "+token)
+    getedge = plugintools.find_single_match(body, '{ return \"(.*?)\"')
+    getedge = getedge.split(",")
+    getedge = getedge[0]
+    plugintools.log("getedge= "+getedge)    
+    url = 'rtmp://'+getedge+'/live?'+token+ ' playpath='+vaughnlive_user.get("playpath")+' live=1 timeout=20'
+    print 'url',url
+    plugintools.play_resolved_url(url)
+
+
+def gethttp_noref(url):
+    plugintools.log("[PalcoTV-0.3.0.Vaughn_Regex] ")    
+
+    request_headers=[]
+    request_headers.append(["User-Agent","Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_3) AppleWebKit/537.31 (KHTML, like Gecko) Chrome/26.0.1410.65 Safari/537.31"])
+    body,response_headers = plugintools.read_body_and_headers(url, headers=request_headers)
+    return body
     
-    decrypted = decrypt_vaughnlive(body)
-    plugintools.log("decrypted= "+decrypted)
-    
-    rtmp_fixed = vaughnlive_user.get("rtmp") + decrypted
-    vaughnlive_user["rtmp"]=rtmp_fixed
-    play_vaughnlive(vaughnlive_user, params)
-
-
-
-def play_vaughnlive(vaughnlive_user, params):
-    plugintools.log("[PalcoTV-0.3.0].vaughnlive User= " + repr(vaughnlive_user) )
-    
-    # Construimos la URL decodificada...
-    url_decoded = vaughnlive_user.get("rtmp") + " playpath=" + vaughnlive_user.get("playpath") + " live=1 timeout=20"
-    url = url_decoded.strip()
-    plugintools.play_resolved_url(url_decoded)
-
-    # Reproducimos URL decodificada...
-    # plugintools.add_item(action="play", title=params.get("title"), url = url_decoded , folder = False, isPlayable = True)
-    params["url"]=url_decoded
-    # return url
-
-
-def decrypt_vaughnlive(body):
-	retVal=""
-	body = body.split(":")
-	print body
-
-	for val in body:
-            val = int(val)/84/5
-            val=chr(val)
-            retVal = retVal + val            
-            
-        plugintools.log("val= "+retVal)
-        return retVal
-        
-        
-        

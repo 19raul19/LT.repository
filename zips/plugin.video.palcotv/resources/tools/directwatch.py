@@ -24,12 +24,12 @@ import xbmcplugin
 import re,urllib,urllib2,sys
 import plugintools,ioncube
 
-home = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.palcotv-wip/', ''))
-tools = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.palcotv-wip/resources/tools', ''))
+home = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.palcotv/', ''))
+tools = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.palcotv/resources/tools', ''))
 addons = xbmc.translatePath(os.path.join('special://home/addons/', ''))
-resources = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.palcotv-wip/resources', ''))
-art = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.palcotv-wip/art', ''))
-tmp = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.palcotv-wip/tmp', ''))
+resources = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.palcotv/resources', ''))
+art = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.palcotv/art', ''))
+tmp = xbmc.translatePath(os.path.join('special://home/addons/plugin.video.palcotv/tmp', ''))
 playlists = xbmc.translatePath(os.path.join('special://home/addons/playlists', ''))
 
 icon = art + 'icon.png'

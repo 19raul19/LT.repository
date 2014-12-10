@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <settings>	
-
 	<category label="General">
 		<setting label="Control paternal" type="lsep" />
    		<setting id="pekes_no" type="bool" label="Control paternal" default="true"/>
@@ -12,5 +11,4 @@
 		<setting label="Vídeos intro 3D" type="lsep" />
 		<setting id="ver_intro" type="bool" label="Mostrar al inicio" default="true"/>
 	</category>
-   
 </settings>
